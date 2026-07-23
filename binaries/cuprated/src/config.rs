@@ -270,7 +270,14 @@ impl Config {
     pub fn clearnet_p2p_config(&self) -> cuprate_p2p::P2PConfig<ClearNet> {
         cuprate_p2p::P2PConfig {
             network: self.network,
-            seeds: p2p::clear_net_seed_nodes(self.network),
+            seeds: {
+                // Built-in network seeds plus any user-configured seed nodes
+                // (`p2p.clear_net.seed_nodes`). FakeChain/regtest ships no
+                // built-in seeds, so a private/isolated network relies on these.
+                let mut seeds = p2p::clear_net_seed_nodes(self.network);
+                seeds.extend(self.p2p.clear_net.seed_nodes.iter().copied());
+                seeds
+            },
             outbound_connections: self.p2p.clear_net.outbound_connections,
             extra_outbound_connections: self.p2p.clear_net.extra_outbound_connections,
             max_inbound_connections: self.p2p.clear_net.max_inbound_connections,
